@@ -118,8 +118,9 @@ class TrackedCollection implements \ArrayAccess {
       // If new, objects will have both a 'model' and a 'last_state',
       case _OBJECT_TRACKED:
         $this->list[$object->getHash()] = [
-          'model' => $object,
-          'last_state' => clone $object
+            'model' => $object,
+            'last_state' => clone $object,
+            'last_state_values' => $object->getAllUnkeyedValues()
         ];
         break;
 
@@ -191,7 +192,7 @@ class TrackedCollection implements \ArrayAccess {
    */
   public function getChangedObjects() {
     foreach ($this->list as $item) {
-      if (isset($item['model']) && isset($item['last_state']) && $item['model'] != $item['last_state']) {
+      if (isset($item['model']) && isset($item['last_state']) && $item['model']->getAllUnkeyedValues() != $item['last_state_values']) {
         yield $item;
       }
     }
