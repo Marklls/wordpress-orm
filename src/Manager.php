@@ -132,34 +132,26 @@ class Manager {
               VALUES
               ";
 
-        while ($values['placeholders_count'] > 0) {
-          $sql .= "(" . implode(", ", $values['placeholders']) . ")";
+        foreach ($values['objects'] as $object) {
+            $insertSql = $sql . "(" . implode(", ", $values['placeholders']) . ")";
 
-          if ($values['placeholders_count'] > 1) {
-            $sql .= ",
-            ";
-          }
+            $prepared = $wpdb->prepare($insertSql, $object->getAllUnkeyedValues());
+            $count = $wpdb->query($prepared);
 
-          $values['placeholders_count'] -= 1;
-        }
-
-        // Insert using Wordpress prepare() which provides SQL injection protection (apparently).
-        $prepared = $wpdb->prepare($sql, $values['values']);
-        $count = $wpdb->query($prepared);
-
-        // Start tracking all the added objects.
-        if ($count) {
-          array_walk($values['objects'], function ($object) {
-            $this->track($object);
-          });
-        }
-        // Something went wrong.
-        else {
-          throw new \Symlink\ORM\Exceptions\FailedToInsertException(__('Failed to insert one or more records into the database.'));
+            // Start tracking all the added objects.
+            if ($count) {
+                $object->setId($wpdb->insert_id);
+                array_walk($object, function ($object) {
+                    $this->track($object);
+                });
+            }
+            // Something went wrong.
+            else {
+                throw new \Symlink\ORM\Exceptions\FailedToInsertException(__('Failed to insert one or more records into the database.'));
+            }
         }
       }
     }
-
   }
 
   /**
