@@ -1,5 +1,5 @@
 {
-  "name": "rjjakes/wordpress-orm",
+  "name": "marklls/wordpress-orm",
   "description": "WORM. Doctrine style ORM for Wordpress.",
   "keywords": ["wordpress", "plugin", "orm", "doctrine", "composer", "sql"],
   "homepage": "https://github.com/rjjakes/wordpress-orm",
@@ -12,6 +12,10 @@
     {
       "name": "Ray Jakes",
       "email": "symlinkdigital@gmail.com"
+    },
+    {
+      "name": "TC",
+      "email": "tc@marklls.com"
     }
   ],
   "autoload" : {
