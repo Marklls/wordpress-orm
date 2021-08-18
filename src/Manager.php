@@ -141,9 +141,7 @@ class Manager {
             // Start tracking all the added objects.
             if ($count) {
                 $object->set('ID', $wpdb->insert_id);
-                array_walk($object, function ($object) {
-                    $this->track($object);
-                });
+                $this->track($object);
             }
             // Something went wrong.
             else {
