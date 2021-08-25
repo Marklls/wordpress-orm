@@ -95,16 +95,16 @@ class BaseRepository {
       ->getResults();
   }
 
-  /**
-   * Return all objects of this type.
-   *
-   * @return array|bool|mixed
-   */
+    /**
+     * Return all objects of this type.
+     *
+     * @return array
+     */
   public function findAll() {
     return $this->createQueryBuilder()
       ->orderBy('ID', 'ASC')
       ->buildQuery()
-      ->getResults();
+      ->getResults(true);
   }
 
   /**
@@ -121,7 +121,7 @@ class BaseRepository {
     }
     return $qb->orderBy('ID', 'ASC')
       ->buildQuery()
-      ->getResults();
+      ->getResults(true);
   }
 
 }
