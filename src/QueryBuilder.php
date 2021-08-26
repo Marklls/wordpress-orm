@@ -184,7 +184,10 @@ class QueryBuilder {
     }
 
     // Save it.
-    $this->query = $wpdb->prepare($sql, $values);
+    if (!empty($values))
+      $this->query = $wpdb->prepare($sql, $values);
+    else
+      $this->query = $sql;
     return $this;
   }
 
