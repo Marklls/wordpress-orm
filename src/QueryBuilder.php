@@ -108,8 +108,10 @@ class QueryBuilder {
     }
 
     // Save it
-    $this->order_by = "ORDER BY " . $property . " " . $operator . "
-    ";
+    if (!$this->order_by)
+        $this->order_by = "ORDER BY " . $property . " " . $operator . "";
+    else
+        $this->order_by .= ", " . $property . " " . $operator . "";
 
     return $this;
   }
