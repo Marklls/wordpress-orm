@@ -58,11 +58,11 @@ class Manager {
 
     // Get the repository for this class (this has already been validated in the Mapper). .
     if (isset($annotations['ORM_Repository'])) {
-      return $annotations['ORM_Repository']::getInstance($classname, $annotations);
+      return $annotations['ORM_Repository']::getInstance($classname);
     }
     // No repository set, so assume the base.
     else {
-      return BaseRepository::getInstance($classname, $annotations);
+      return BaseRepository::getInstance($classname);
     }
   }
 

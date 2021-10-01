@@ -2,37 +2,33 @@
 
 namespace Symlink\ORM\Repositories;
 
+use Symlink\ORM\Mapping;
 use Symlink\ORM\QueryBuilder;
 
 class BaseRepository {
 
   private $classname;
 
-  private $annotations;
-
   /**
    * BaseRepository constructor.
    *
    * @param $classname
-   * @param $annotations
    */
-  public function __construct($classname, $annotations) {
+  public function __construct($classname) {
     $this->classname = $classname;
-    $this->annotations = $annotations;
   }
 
   /**
    * @param $classname
-   * @param $annotations
    *
    * @return \Symlink\ORM\Repositories\BaseRepository
    */
-  public static function getInstance($classname, $annotations) {
+  public static function getInstance($classname) {
     // Get the class (as this could be a child of BaseRepository)
     $this_repository_class = get_called_class();
 
     // Return a new instance of the class.
-    return new $this_repository_class($classname, $annotations);
+    return new $this_repository_class($classname);
   }
 
   /**
@@ -54,18 +50,18 @@ class BaseRepository {
    * Getter used in the query builder
    * @return mixed
    */
-  public function getDBTable() {
-    return $this->annotations['ORM_Table'];
+  public function getDBTable($classname = null) {
+    return Mapping::getMapper()->getProcessed($classname ?: $this->classname)['ORM_Table'];
   }
 
   /**
    * Getter used in the query builder.
    * @return array
    */
-  public function getObjectProperties() {
+  public function getObjectProperties($classname = null) {
     return array_merge(
       ['ID'],
-      array_keys($this->annotations['schema'])
+      array_keys(Mapping::getMapper()->getProcessed($classname ?: $this->classname)['schema'])
     );
   }
 
@@ -73,10 +69,10 @@ class BaseRepository {
    * Getter used in the query builder.
    * @return array
    */
-  public function getObjectPropertyPlaceholders() {
+  public function getObjectPropertyPlaceholders($classname = null) {
     return array_merge(
       ['ID' => '%d'],
-      $this->annotations['placeholder']
+      Mapping::getMapper()->getProcessed($classname ?: $this->classname)['placeholder']
     );
   }
 

@@ -6,6 +6,9 @@ use Symlink\ORM\Repositories\BaseRepository;
 
 class QueryBuilder {
 
+  private $join;
+  private $joinClassname;
+
   private $where;
 
   private $order_by;
@@ -33,8 +36,45 @@ class QueryBuilder {
     $this->order_by;
     $this->limit;
 
+    $this->join;
+    $this->joinClassname = [];
+
     // And store the sent repository.
     $this->repository = $repository;
+  }
+
+    /**
+     * @param $classname
+     * @param $property
+     * @throws Exceptions\PropertyDoesNotExistException
+     * @throws Exceptions\RepositoryClassNotDefinedException
+     * @throws Exceptions\RequiredAnnotationMissingException
+     * @throws Exceptions\UnknownColumnTypeException
+     */
+  public function join($classname, $property, $alias) {
+      global $wpdb;
+
+      // Get the annotations for this class.
+      $annotations = Mapping::getMapper()->getProcessed($classname);
+      // Get the repository for this class (this has already been validated in the Mapper). .
+      if (!isset($annotations['ORM_Repository'])) {
+          return $this;
+      }
+
+      // Check if alias already use
+      if (array_key_exists($alias, $this->joinClassname) || $alias === $this->repository->getDBTable()) {
+          throw new \Symlink\ORM\Exceptions\AliasExistException(sprintf(__('Alias %s already exist on query for model %s.'), $alias, $this->repository->getObjectClass()));
+      }
+
+      // Check the property exists.
+      $this->checkPropertyExist($property);
+
+      $this->joinClassname[$alias] = $classname;
+
+      $this->join .= "JOIN " . $wpdb->prefix . $annotations['ORM_Table'] . " " . $alias .
+          " ON " . $alias . ".ID = " . $this->repository->getDBTable() . "." . $property . " ";
+
+      return $this;
   }
 
   /**
@@ -49,11 +89,8 @@ class QueryBuilder {
    * @throws \Symlink\ORM\Exceptions\PropertyDoesNotExistException
    */
   public function where($property, $value, $operator) {
-
-    // Check the property exists.
-    if (!in_array($property, $this->repository->getObjectProperties()) && $property != 'ID') {
-      throw new \Symlink\ORM\Exceptions\PropertyDoesNotExistException(sprintf(__('Property %s does not exist in model %s.'), $property, $this->repository->getObjectClass()));
-    }
+      // Check the property exists.
+      $this->checkPropertyExist($property);
 
     // Check the operator is valid.
     if (!in_array($operator, [
@@ -92,11 +129,8 @@ class QueryBuilder {
    * @throws \Symlink\ORM\Exceptions\PropertyDoesNotExistException
    */
   public function orderBy($property, $operator) {
-
     // Check the property exists.
-    if (!in_array($property, $this->repository->getObjectProperties()) && $property != 'ID') {
-      throw new \Symlink\ORM\Exceptions\PropertyDoesNotExistException(sprintf(__('Property %s does not exist in model %s.'), $property, $this->repository->getObjectClass()));
-    }
+    $this->checkPropertyExist($property);
 
     // Check the operator is valid.
     if (!in_array($operator, [
@@ -109,9 +143,9 @@ class QueryBuilder {
 
     // Save it
     if (!$this->order_by)
-        $this->order_by = "ORDER BY " . $property . " " . $operator . "";
+        $this->order_by = "ORDER BY " . $property . " " . $operator . " ";
     else
-        $this->order_by .= ", " . $property . " " . $operator . "";
+        $this->order_by .= ", " . $property . " " . $operator . " ";
 
     return $this;
   }
@@ -143,8 +177,13 @@ class QueryBuilder {
 
     $values = [];
 
-    $sql = "SELECT * FROM " . $wpdb->prefix . $this->repository->getDBTable() . "
+    $sql = "SELECT * FROM " . $wpdb->prefix . $this->repository->getDBTable() . " " . $this->repository->getDBTable() . "
     ";
+
+      // Add the ORDER BY clause.
+      if ($this->join) {
+          $sql .= $this->join;
+      }
 
     // Combine the WHERE clauses and add to the SQL statement.
     if (count($this->where)) {
@@ -245,5 +284,31 @@ class QueryBuilder {
     else {
       throw new \Symlink\ORM\Exceptions\NoQueryException(__('No query was built. Run ->buildQuery() first.'));
     }
+  }
+
+    /**
+     * @param $property
+     * @throws Exceptions\AliasNotExistException
+     * @throws Exceptions\PropertyDoesNotExistException
+     */
+  private function checkPropertyExist($property) {
+      if (substr_count($property, '.') === 1) {
+          list($alias, $property) = explode('.', $property, 2);
+
+          // Check if alias exist
+          if (!array_key_exists($alias, $this->joinClassname)) {
+              throw new \Symlink\ORM\Exceptions\AliasNotExistException(sprintf(__('Alias %s does not exist in query for model %s.'), $alias, $this->repository->getObjectClass()));
+          }
+
+          // Check the property exists.
+          if (!in_array($property, $this->repository->getObjectProperties($this->joinClassname[$alias])) && $property != 'ID') {
+              throw new \Symlink\ORM\Exceptions\PropertyDoesNotExistException(sprintf(__('Property %s does not exist in model %s.'), $property, $this->joinClassname[$alias]));
+          }
+      } else {
+          // Check the property exists.
+          if (!in_array($property, $this->repository->getObjectProperties()) && $property != 'ID') {
+              throw new \Symlink\ORM\Exceptions\PropertyDoesNotExistException(sprintf(__('Property %s does not exist in model %s.'), $property, $this->repository->getObjectClass()));
+          }
+      }
   }
 }
