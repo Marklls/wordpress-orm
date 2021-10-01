@@ -73,7 +73,7 @@ class QueryBuilder {
       $this->joinClassname[$alias] = $classname;
 
       $this->join .= "JOIN " . $wpdb->prefix . $annotations['ORM_Table'] . " " . $alias .
-          " ON " . $alias . ".ID = " . $this->repository->getDBTable() . "." . $property . " ";
+          " ON " . $alias . ".ID = " . (substr_count($property, '.') === 1 ? '' : $this->repository->getDBTable()) . "." . $property . " ";
 
       return $this;
   }
