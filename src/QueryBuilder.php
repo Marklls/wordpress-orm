@@ -56,8 +56,9 @@ class QueryBuilder {
 
       // Get the annotations for this class.
       $annotations = Mapping::getMapper()->getProcessed($classname);
-      // Get the repository for this class (this has already been validated in the Mapper). .
-      if (!isset($annotations['ORM_Repository'])) {
+
+      // Get the repository for this class (this has already been validated in the Mapper).
+      if (!isset($annotations['ORM_Table']) || !isset($annotations['ORM_Type']) || $annotations['ORM_Type'] !== 'Entity') {
           return $this;
       }
 
@@ -177,7 +178,7 @@ class QueryBuilder {
 
     $values = [];
 
-    $sql = "SELECT * FROM " . $wpdb->prefix . $this->repository->getDBTable() . " " . $this->repository->getDBTable() . "
+    $sql = "SELECT " . $this->repository->getDBTable() . ".* FROM " . $wpdb->prefix . $this->repository->getDBTable() . " " . $this->repository->getDBTable() . "
     ";
 
       // Add the ORDER BY clause.
