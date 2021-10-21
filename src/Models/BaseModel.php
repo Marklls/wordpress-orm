@@ -39,6 +39,11 @@ abstract class BaseModel {
   }
 
   /**
+   * Public function override by child to update relations IDs
+   */
+  public function idSet() { }
+
+  /**
    * Getter.
    *
    * @return string
